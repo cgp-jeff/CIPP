@@ -79,13 +79,14 @@ export const getCippFormatting = (data, cellName, type, canReceive) => {
     "CreationTime",
   ];
   if (timeAgoArray.includes(cellName)) {
-    return isText && canReceive !== "both" ? (
-      new Date(data)
+    return isText && canReceive === false ? (
+      new Date(data).toLocaleString() // This runs if canReceive is false and isText is true
+    ) : isText && canReceive !== "both" ? (
+      new Date(data) // This runs if isText is true and canReceive is not "both" or false
     ) : (
       <CippTimeAgo data={data} type={type} />
     );
   }
-
   const passwordItems = ["password", "applicationsecret", "refreshtoken"];
 
   if (passwordItems.includes(cellNameLower)) {
@@ -290,7 +291,7 @@ export const getCippFormatting = (data, cellName, type, canReceive) => {
   if (typeof data === "string" && (data.startsWith("{") || data.startsWith("["))) {
     try {
       return isText ? (
-        JSON.stringify(JSON.parse(data))
+        data
       ) : (
         <CippDataTableButton data={JSON.parse(data)} tableTitle={getCippTranslation(cellName)} />
       );

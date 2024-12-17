@@ -19,7 +19,7 @@ import { useEffect } from "react";
 import { CippDataTable } from "../CippTable/CippDataTable";
 import { PlusSmallIcon, SparklesIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { CippFormTenantSelector } from "../CippComponents/CippFormTenantSelector";
-import { SyncAlt } from "@mui/icons-material";
+import { Sync, SyncAlt } from "@mui/icons-material";
 import { CippFormComponent } from "../CippComponents/CippFormComponent";
 import { CippApiResults } from "../CippComponents/CippApiResults";
 
@@ -99,7 +99,11 @@ const CippIntegrationSettings = ({ children }) => {
       const matchingCompany = mappings.data.Companies.find(
         (company) => company.name === tenant.displayName
       );
-      if (tableData.find((item) => item.TenantId === tenant.customerId)) return;
+      if (
+        Array.isArray(tableData) &&
+        tableData?.find((item) => item.TenantId === tenant.customerId)
+      )
+        return;
       if (matchingCompany) {
         newTableData.push({
           TenantId: tenant.customerId,
@@ -109,7 +113,11 @@ const CippIntegrationSettings = ({ children }) => {
         });
       }
     });
-    setTableData([...tableData, ...newTableData]);
+    if (Array.isArray(tableData)) {
+      setTableData([...tableData, ...newTableData]);
+    } else {
+      setTableData(newTableData);
+    }
     if (extension.autoMapSyncApi) {
       automapPostCall.mutate({
         url: `/api/ExecExtensionMapping?AutoMapping=${router.query.id}`,
@@ -153,7 +161,12 @@ const CippIntegrationSettings = ({ children }) => {
             >
               <Grid item xs={12} md={4}>
                 <Box sx={{ my: "auto" }}>
-                  <CippFormTenantSelector formControl={formControl} multiple={false} />
+                  <CippFormTenantSelector
+                    formControl={formControl}
+                    multiple={false}
+                    required={false}
+                    disableClearable={false}
+                  />
                 </Box>
               </Grid>
               <Grid item>
@@ -176,7 +189,9 @@ const CippIntegrationSettings = ({ children }) => {
                       value: company.value,
                     };
                   })}
+                  creatable={false}
                   multiple={false}
+                  isFetching={mappings.isFetching}
                 />
               </Grid>
               <Grid item>
@@ -192,6 +207,19 @@ const CippIntegrationSettings = ({ children }) => {
                     <Button size="small" onClick={() => handleAutoMap()} variant="contained">
                       <SvgIcon>
                         <SparklesIcon />
+                      </SvgIcon>
+                    </Button>
+                  </Tooltip>
+                  <Tooltip title="Refresh Integration Mapping">
+                    <Button
+                      size="small"
+                      onClick={() => {
+                        mappings.refetch();
+                      }}
+                      variant="contained"
+                    >
+                      <SvgIcon>
+                        <Sync />
                       </SvgIcon>
                     </Button>
                   </Tooltip>
