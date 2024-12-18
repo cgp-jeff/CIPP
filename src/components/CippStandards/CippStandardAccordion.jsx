@@ -10,6 +10,7 @@ import {
   Divider,
   Grid,
   Tooltip,
+  Chip,
 } from "@mui/material";
 import { ExpandMore as ExpandMoreIcon, Delete, Add, Public, TableChart } from "@mui/icons-material";
 import CippFormComponent from "/src/components/CippComponents/CippFormComponent";
@@ -21,6 +22,8 @@ import Azure from "../../icons/iconly/bulk/azure";
 import Exchange from "../../icons/iconly/bulk/exchange";
 import Defender from "../../icons/iconly/bulk/defender";
 import Intune from "../../icons/iconly/bulk/intune";
+import GDAPRoles from "/src/data/GDAPRoles";
+import timezoneList from "/src/data/timezoneList";
 
 const CippStandardAccordion = ({
   standards,
@@ -64,6 +67,39 @@ const CippStandardAccordion = ({
     ];
     return allActions.filter((action) => !disabledFeatures?.[action.value.toLowerCase()]);
   };
+
+  const CippAddedComponent = ({ standardName, component }) => {
+    var updatedComponent = { ...component };
+
+    if (component.type === "AdminRolesMultiSelect") {
+      updatedComponent.type = "autoComplete";
+      updatedComponent.options = GDAPRoles.map((role) => ({
+        label: role.Name,
+        value: role.ObjectId,
+      }));
+    } else if (component.type === "TimezoneSelect") {
+      updatedComponent.type = "autoComplete";
+      updatedComponent.options = timezoneList.map((tz) => ({
+        label: tz.timezone,
+        value: tz.timezone,
+      }));
+    } else {
+      updatedComponent.type = component.type;
+    }
+
+    return (
+      <Grid item xs={12}>
+        <CippFormComponent
+          type={updatedComponent.type}
+          label={updatedComponent.label}
+          formControl={formControl}
+          {...updatedComponent}
+          name={`${standardName}.${updatedComponent.name}`}
+        />
+      </Grid>
+    );
+  };
+
   return Object.keys(selectedStandards).map((standardName) => {
     const standard = standards.find((s) => s.name === standardName.split("[")[0]);
 
@@ -72,9 +108,9 @@ const CippStandardAccordion = ({
     const isExpanded = expanded === standardName;
     const hasAddedComponents = standard.addedComponent && standard.addedComponent.length > 0;
     const isConfigured = configuredState[standardName];
-
     const disabledFeatures = standard.disabledFeatures || {};
 
+    const selectedActions = _.get(watchedValues, `${standardName}.action`);
     const selectedTemplateName = standard.multiple
       ? _.get(watchedValues, `${standardName}.${standard.addedComponent?.[0]?.name}`)
       : "";
@@ -101,12 +137,25 @@ const CippStandardAccordion = ({
                 <Microsoft />
               )}
             </Avatar>
-            <Box>
+            <Stack>
               <Typography variant="h6">{accordionTitle}</Typography> {/* Dynamic title */}
+              {selectedActions && selectedActions?.length > 0 && (
+                <Stack direction="row" spacing={1} sx={{ my: 0.5 }}>
+                  {selectedActions.map((action) => (
+                    <Chip
+                      label={action.label}
+                      color="info"
+                      variant="outlined"
+                      size="small"
+                      sx={{ mr: 1 }}
+                    />
+                  ))}
+                </Stack>
+              )}
               <Typography variant="body2" color="textSecondary">
                 {standard.helpText}
               </Typography>
-            </Box>
+            </Stack>
           </Stack>
           <Stack direction="row" alignItems="center" spacing={1}>
             {standard.multiple && (
@@ -159,15 +208,11 @@ const CippStandardAccordion = ({
                 <Grid item xs={8}>
                   <Grid container spacing={2}>
                     {standard.addedComponent.map((component, idx) => (
-                      <Grid key={idx} item xs={12}>
-                        <CippFormComponent
-                          type={component.type}
-                          label={component.label}
-                          formControl={formControl}
-                          {...component}
-                          name={`${standardName}.${component.name}`}
-                        />
-                      </Grid>
+                      <CippAddedComponent
+                        key={idx}
+                        standardName={standardName}
+                        component={component}
+                      />
                     ))}
                   </Grid>
                 </Grid>
