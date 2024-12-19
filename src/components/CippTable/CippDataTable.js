@@ -49,7 +49,7 @@ export const CippDataTable = (props) => {
     refreshFunction,
     incorrectDataMessage = "Data not in correct format",
     onChange,
-    filters,
+    filters = [],
   } = props;
   const [columnVisibility, setColumnVisibility] = useState(initialColumnVisibility);
   const [usedData, setUsedData] = useState(data);
@@ -74,6 +74,13 @@ export const CippDataTable = (props) => {
       setUsedData(data);
     }
   }, [data, api?.url]);
+
+  useEffect(() => {
+    if (api?.url) {
+      setInitialApi(api);
+      getRequestData.refetch();
+    }
+  }, [api?.url, api?.data]);
 
   useEffect(() => {
     if (getRequestData.isSuccess && !getRequestData.isFetching) {
