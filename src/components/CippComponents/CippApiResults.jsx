@@ -52,9 +52,12 @@ const extractAllResults = (data) => {
       return;
     }
 
+    const ignoreKeys = ["metadata", "Metadata"];
+
     if (typeof obj === "object") {
       Object.keys(obj).forEach((key) => {
         const value = obj[key];
+        if (ignoreKeys.includes(key)) return;
         if (["Results", "Result", "results", "result"].includes(key)) {
           if (Array.isArray(value)) {
             value.forEach((valItem) => {
@@ -96,11 +99,25 @@ export const CippApiResults = (props) => {
   const [errorVisible, setErrorVisible] = useState(false);
   const [fetchingVisible, setFetchingVisible] = useState(false);
   const [finalResults, setFinalResults] = useState([]);
+  const correctResultObj = useMemo(() => {
+    const data = apiObject?.data;
+    const dataData = data?.data;
+
+    if (dataData?.Results) {
+      return dataData.Results;
+    } else if (data?.Results) {
+      return data.Results;
+    } else if (dataData && !("metadata" in dataData)) {
+      return dataData;
+    } else if (data && !("metadata" in data)) {
+      return data;
+    } else {
+      return "This API has not sent the correct output format.";
+    }
+  }, [apiObject]);
 
   const allResults = useMemo(() => {
-    const apiResults = extractAllResults(
-      apiObject?.data?.data ? apiObject?.data?.data : apiObject.data ? apiObject.data : null
-    );
+    const apiResults = extractAllResults(correctResultObj);
     return apiResults;
   }, [apiObject]);
 
@@ -192,7 +209,7 @@ export const CippApiResults = (props) => {
       </Collapse>
 
       {/* Individual result alerts */}
-      {!errorsOnly && hasVisibleResults && (
+      {apiObject.isSuccess && !errorsOnly && hasVisibleResults && (
         <Grid container spacing={2}>
           {finalResults.map((resultObj) => (
             <Grid item size={12} key={resultObj.id}>
