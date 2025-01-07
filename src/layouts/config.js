@@ -3,6 +3,7 @@ import {
   Cloud,
   CloudOutlined,
   DeviceHub,
+  HomeRepairService,
   Laptop,
   MailOutline,
   Shield,
@@ -114,26 +115,6 @@ export const nativeMenuItems = [
         items: [{ title: "Backups", path: "/tenant/backup/backup-wizard" }],
       },
       {
-        title: "Tools",
-        path: "/tenant/tools",
-        items: [
-          {
-            title: "Graph Explorer",
-            path: "/tenant/administration/graph-explorer",
-          },
-          {
-            title: "Application Approval",
-            path: "/tenant/administration/appapproval",
-          },
-          { title: "IP Database", path: "/tenant/tools/geoiplookup" },
-          { title: "Tenant Lookup", path: "/tenant/tools/tenantlookup" },
-          {
-            title: "Individual Domain Check",
-            path: "/tenant/standards/individual-domains",
-          },
-        ],
-      },
-      {
         title: "Standards",
         path: "/tenant/standards",
         items: [
@@ -167,7 +148,6 @@ export const nativeMenuItems = [
           },
         ],
       },
-
       {
         title: "Reports",
         path: "/tenant/reports",
@@ -175,6 +155,10 @@ export const nativeMenuItems = [
           {
             title: "Licence Report",
             path: "/tenant/administration/list-licenses",
+          },
+          {
+            title: "Sherweb Licence Report",
+            path: "/tenant/administration/list-csp-licenses",
           },
           {
             title: "Consented Applications",
@@ -302,7 +286,6 @@ export const nativeMenuItems = [
         path: "/teams-share/teams",
         items: [
           { title: "Teams", path: "/teams-share/teams/list-team" },
-          { title: "Add Team", path: "/teams-share/teams/add-team" },
           { title: "Teams Activity", path: "/teams-share/teams/teams-activity" },
           { title: "Business Voice", path: "/teams-share/teams/business-voice" },
         ],
@@ -334,35 +317,15 @@ export const nativeMenuItems = [
         ],
       },
       {
-        title: "Tools",
-        path: "/email/tools",
-        items: [
-          {
-            title: "Mailbox Restore Wizard",
-            path: "/email/tools/mailbox-restore-wizard",
-          },
-          { title: "Mailbox Restores", path: "/email/tools/mailbox-restores" },
-          { title: "Message Viewer", path: "/email/tools/message-viewer" },
-        ],
-      },
-      {
         title: "Transport",
         path: "/email/Transport",
         items: [
           { title: "Transport rules", path: "/email/transport/list-rules" },
           {
-            title: "Deploy Transport rule",
-            path: "/email/transport/deploy-rules",
-          },
-          {
             title: "Transport Templates",
             path: "/email/transport/list-templates",
           },
           { title: "Connectors", path: "/email/connectors/list-connectors" },
-          {
-            title: "Deploy Connector Templates",
-            path: "/email/connectors/deploy-connector",
-          },
           {
             title: "Connector Templates",
             path: "/email/connectors/list-connector-templates",
@@ -374,11 +337,9 @@ export const nativeMenuItems = [
         path: "/email/spamfilter",
         items: [
           { title: "Spamfilter", path: "/email/spamfilter/list-spamfilter" },
-          {
-            title: "Apply Spamfilter Template",
-            path: "/email/spamfilter/deploy",
-          },
-          { title: "Templates", path: "/email/spamfilter/list-templates" },
+          { title: "Spamfilter templates", path: "/email/spamfilter/list-templates" },
+          { title: "Connection filter", path: "/email/connectionfilter/list-connectionfilter" },
+          { title: "Connection filter templates", path: "/email/connectionfilter/list-templates" },
         ],
       },
       {
@@ -424,6 +385,61 @@ export const nativeMenuItems = [
     ],
   },
   {
+    title: "Tools",
+    type: "header",
+    icon: (
+      <SvgIcon>
+        <HomeRepairService />
+      </SvgIcon>
+    ),
+    items: [
+      {
+        title: "Tenant Tools",
+        path: "/tenant/tools",
+        items: [
+          {
+            title: "Graph Explorer",
+            path: "/tenant/administration/graph-explorer",
+          },
+          {
+            title: "Application Approval",
+            path: "/tenant/administration/appapproval",
+          },
+          { title: "Tenant Lookup", path: "/tenant/tools/tenantlookup" },
+
+          { title: "IP Database", path: "/tenant/tools/geoiplookup" },
+
+          {
+            title: "Individual Domain Check",
+            path: "/tenant/standards/individual-domains",
+          },
+        ],
+      },
+      {
+        title: "Email Tools",
+        path: "/email/tools",
+        items: [
+          { title: "Mailbox Restores", path: "/email/tools/mailbox-restores" },
+          { title: "Message Viewer", path: "/email/tools/message-viewer" },
+        ],
+      },
+      {
+        title: "Dark Web Tools",
+        path: "/tools/darkweb",
+        items: [
+          { title: "Tenant Breach Lookup", path: "/tools/tenantbreachlookup" },
+          { title: "Individual Breach Lookup", path: "/tools/breachlookup" },
+          //{ title: "Password Checker", path: "/tools/passwordchecker" }, to add later, find a nice way so people dont just fill in passwords online...
+        ],
+      },
+      {
+        title: "Scheduler",
+        path: "/cipp/scheduler",
+        roles: ["editor", "admin", "superadmin"],
+      },
+    ],
+  },
+  {
     title: "CIPP",
     type: "header",
     icon: (
@@ -432,17 +448,10 @@ export const nativeMenuItems = [
       </SvgIcon>
     ),
     items: [
-      {
-        title: "Settings",
-        items: [
-          { title: "Application Settings", path: "/cipp/settings", roles: ["admin", "superadmin"] },
-          { title: "Integrations", path: "/cipp/integrations", roles: ["admin", "superadmin"] },
-          { title: "Scheduler", path: "/cipp/scheduler", roles: ["editor", "admin", "superadmin"] },
-          { title: "Logbook", path: "/cipp/logs", roles: ["admin", "superadmin"] },
-          { title: "SAM Setup Wizard", path: "/onboarding", roles: ["admin", "superadmin"] },
-          { title: "Log Out", path: "/logout" },
-        ],
-      },
+      { title: "Application Settings", path: "/cipp/settings", roles: ["admin", "superadmin"] },
+      { title: "Logbook", path: "/cipp/logs", roles: ["admin", "superadmin"] },
+      { title: "SAM Setup Wizard", path: "/onboarding", roles: ["admin", "superadmin"] },
+      { title: "Integrations", path: "/cipp/integrations", roles: ["admin", "superadmin"] },
       {
         title: "Advanced",
         roles: ["superadmin"],

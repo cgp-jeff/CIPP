@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Button, Typography, Divider } from "@mui/material";
+import { Button, Typography } from "@mui/material";
 import {
   Save as SaveIcon,
   Delete,
@@ -37,18 +37,29 @@ const GroupItems = styled("ul")({
   padding: 0,
 });
 
-const CippGraphExplorerFilter = ({ endpointFilter, onSubmitFilter, component = "accordion" }) => {
+const CippGraphExplorerFilter = ({
+  endpointFilter,
+  onSubmitFilter,
+  onPresetChange,
+  component = "accordion",
+}) => {
   const [offCanvasOpen, setOffCanvasOpen] = useState(false);
   const [cardExpanded, setCardExpanded] = useState(true);
   const [offCanvasContent, setOffCanvasContent] = useState(null);
   const [selectedPresetState, setSelectedPreset] = useState(null);
   const [presetOwner, setPresetOwner] = useState(false);
+  const [lastPresetTitle, setLastPresetTitle] = useState(null);
   const [presetOptions, setPresetOptions] = useState([]);
   const formControl = useForm({
     mode: "onChange",
     defaultValues: {
       endpoint: "",
-      $select: "",
+      $select: [],
+      $filter: "",
+      $expand: "",
+      $top: "",
+      $search: "",
+      $format: "",
       NoPagination: false,
       ReverseTenantLookup: false,
       ReverseTenantLookupProperty: "tenantId",
@@ -57,6 +68,8 @@ const CippGraphExplorerFilter = ({ endpointFilter, onSubmitFilter, component = "
       IsShared: false,
     },
   });
+
+  const defaultGraphExplorerTitle = "Graph Explorer";
 
   var gridItemSize = 6;
   if (component !== "accordion") {
@@ -68,16 +81,16 @@ const CippGraphExplorerFilter = ({ endpointFilter, onSubmitFilter, component = "
     gridSwitchSize = 12;
   }
 
-  const { control, handleSubmit, watch } = formControl;
+  const { control, handleSubmit } = formControl;
   const tenant = useSettings().currentTenant;
-  const endPoint = useWatch({ control, name: "endpoint" });
+  const endpoint = useWatch({ control, name: "endpoint" });
 
   // API call for available properties
   const propertyList = ApiGetCall({
     url: "/api/ListGraphRequest",
-    queryKey: `graph-properties-${endPoint}`,
+    queryKey: `graph-properties-${endpoint}`,
     data: {
-      Endpoint: endPoint,
+      Endpoint: endpoint,
       ListProperties: true,
       TenantFilter: tenant,
       IgnoreErrors: true,
@@ -133,11 +146,11 @@ const CippGraphExplorerFilter = ({ endpointFilter, onSubmitFilter, component = "
   // Debounced refetch when endpoint, put in in a useEffect dependand on endpoint
   const debouncedRefetch = useCallback(
     debounce(() => {
-      if (endPoint) {
+      if (endpoint) {
         propertyList.refetch();
       }
     }, 1000),
-    [endPoint] // Dependencies that the debounce function depends on
+    [endpoint] // Dependencies that the debounce function depends on
   );
 
   useEffect(() => {
@@ -146,7 +159,7 @@ const CippGraphExplorerFilter = ({ endpointFilter, onSubmitFilter, component = "
     return () => {
       debouncedRefetch.cancel();
     };
-  }, [endPoint, debouncedRefetch]);
+  }, [endpoint, debouncedRefetch]);
 
   const savePresetApi = ApiPostCall({
     relatedQueryKeys: "ListGraphExplorerPresets",
@@ -199,6 +212,8 @@ const CippGraphExplorerFilter = ({ endpointFilter, onSubmitFilter, component = "
       setSelectedPreset(selectedPresets.value);
       selectedPresets.addedFields.params.name = selectedPresets.label;
 
+      // save last preset title
+      setLastPresetTitle(selectedPresets.label);
       formControl.reset(selectedPresets?.addedFields?.params, { keepDefaultValues: true });
     }
   }, [selectedPresets]);
@@ -289,6 +304,30 @@ const CippGraphExplorerFilter = ({ endpointFilter, onSubmitFilter, component = "
       {
         Key: "$count",
         Value: formParameters.$count,
+      },
+      {
+        Key: "$expand",
+        Value: formParameters.$expand,
+      },
+      {
+        Key: "ReverseTenantLookup",
+        Value: formParameters.ReverseTenantLookup,
+      },
+      {
+        Key: "ReverseTenantLookupProperty",
+        Value: formParameters.ReverseTenantLookupProperty,
+      },
+      {
+        Key: "NoPagination",
+        Value: formParameters.NoPagination,
+      },
+      {
+        Key: "AsApp",
+        Value: formParameters.AsApp,
+      },
+      {
+        Key: "$format",
+        Value: formParameters.$format,
       },
     ];
     Parameters.forEach((param) => {
@@ -405,6 +444,17 @@ const CippGraphExplorerFilter = ({ endpointFilter, onSubmitFilter, component = "
     if (values.$count === false) {
       delete values.$count;
     }
+
+    Object.keys(values).forEach((key) => {
+      if (values[key] === null) {
+        delete values[key];
+      }
+    });
+
+    if (onPresetChange) {
+      const presetName = lastPresetTitle ? `Graph Explorer - ${lastPresetTitle}` : null;
+      if (presetName) onPresetChange(presetName);
+    }
     onSubmitFilter(values);
     setCardExpanded(false);
   };
@@ -496,7 +546,7 @@ const CippGraphExplorerFilter = ({ endpointFilter, onSubmitFilter, component = "
           </>
         }
       >
-        <Grid container size={12} spacing={2}>
+        <Grid container size={12} spacing={2} sx={{ mb: 2 }}>
           <Grid item size={gridItemSize}>
             <CippFormComponent
               type="autoComplete"
@@ -515,6 +565,18 @@ const CippGraphExplorerFilter = ({ endpointFilter, onSubmitFilter, component = "
               placeholder="Select a preset"
             />
           </Grid>
+
+          {/* Preset Name Field */}
+          <Grid item size={gridItemSize}>
+            <CippFormComponent
+              type="textField"
+              name="name"
+              label="Preset Name"
+              formControl={formControl}
+              placeholder="Name for this filter preset"
+            />
+          </Grid>
+
           <Grid item size={gridItemSize}>
             <CippFormComponent
               type="textField"
@@ -535,33 +597,16 @@ const CippGraphExplorerFilter = ({ endpointFilter, onSubmitFilter, component = "
               isFetching={propertyList.isLoading}
               options={
                 (propertyList.isSuccess &&
-                  propertyList?.data?.Results?.map((item) => ({ label: item, value: item }))) ||
-                []
+                  propertyList?.data?.Results?.length > 0 &&
+                  propertyList?.data?.Results?.map((item) => ({ label: item, value: item }))) || [
+                  {
+                    label: "No properties found, check your endpoint",
+                    value: "",
+                  },
+                ]
               }
               placeholder="Columns to select"
               helperText="Comma-separated list of columns to include in the response"
-            />
-          </Grid>
-
-          {/* Expand Field */}
-          <Grid item size={gridItemSize}>
-            <CippFormComponent
-              type="textField"
-              name="$expand"
-              label="Expand"
-              formControl={formControl}
-              placeholder="Expand related entities"
-            />
-          </Grid>
-
-          {/* Preset Name Field */}
-          <Grid item size={gridItemSize}>
-            <CippFormComponent
-              type="textField"
-              name="name"
-              label="Preset Name"
-              formControl={formControl}
-              placeholder="Name for this filter preset"
             />
           </Grid>
 
@@ -573,6 +618,17 @@ const CippGraphExplorerFilter = ({ endpointFilter, onSubmitFilter, component = "
               label="Filter"
               formControl={formControl}
               placeholder="OData filter"
+            />
+          </Grid>
+
+          {/* Expand Field */}
+          <Grid item size={gridItemSize}>
+            <CippFormComponent
+              type="textField"
+              name="$expand"
+              label="Expand"
+              formControl={formControl}
+              placeholder="Expand related entities"
             />
           </Grid>
 
@@ -599,6 +655,18 @@ const CippGraphExplorerFilter = ({ endpointFilter, onSubmitFilter, component = "
             />
           </Grid>
 
+          {/* Format Field */}
+          <Grid item size={gridItemSize}>
+            <CippFormComponent
+              type="textField"
+              name="$format"
+              label="Format"
+              formControl={formControl}
+              placeholder="Format parameter for report data (e.g. application/json)"
+            />
+          </Grid>
+        </Grid>
+        <Grid container spacing={2}>
           {/* Reverse Tenant Lookup Switch */}
           <Grid item size={{ xs: 6, sm: gridSwitchSize }}>
             <CippFormComponent

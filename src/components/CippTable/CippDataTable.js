@@ -50,6 +50,7 @@ export const CippDataTable = (props) => {
     incorrectDataMessage = "Data not in correct format",
     onChange,
     filters = [],
+    clearOnError = false,
   } = props;
   const [columnVisibility, setColumnVisibility] = useState(initialColumnVisibility);
   const [usedData, setUsedData] = useState(data);
@@ -68,6 +69,13 @@ export const CippDataTable = (props) => {
     queryKey: configuredQueryKey,
     waiting: waitingBool,
   });
+
+  useEffect(() => {
+    if (queryKey && api?.url) {
+      setConfiguredQueryKey(queryKey);
+      getRequestData.refetch();
+    }
+  }, [queryKey]);
 
   useEffect(() => {
     if (Array.isArray(data) && !api?.url) {
@@ -154,6 +162,12 @@ export const CippDataTable = (props) => {
     setColumnVisibility(newVisibility);
   }, [columns.length, usedData, queryKey]);
 
+  useEffect(() => {
+    if (clearOnError && getRequestData.isError) {
+      setUsedData([]);
+    }
+  }, [getRequestData.isError, getRequestData.isFetchNextPageError, clearOnError]);
+
   const createDialog = useDialog();
 
   // Apply the modeInfo directly
@@ -173,10 +187,14 @@ export const CippDataTable = (props) => {
     data: memoizedData,
     state: {
       columnVisibility,
-      showSkeletons: getRequestData.isFetching ? getRequestData.isFetching : isFetching,
+      showSkeletons: getRequestData.isFetching
+        ? getRequestData.isFetchingNextPage
+          ? isFetching
+          : getRequestData.isFetching
+        : isFetching,
     },
     renderEmptyRowsFallback: ({ table }) =>
-      getRequestData.data?.pages?.[0].Metadata?.QueueMessage ? (
+      getRequestData.data?.pages?.[0]?.Metadata?.QueueMessage ? (
         <center>{getRequestData.data?.pages?.[0].Metadata?.QueueMessage}</center>
       ) : undefined,
     onColumnVisibilityChange: setColumnVisibility,

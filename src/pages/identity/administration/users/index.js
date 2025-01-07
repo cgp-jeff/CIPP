@@ -1,12 +1,33 @@
-import { EyeIcon } from "@heroicons/react/24/outline";
+import { EyeIcon, MagnifyingGlassIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { CippTablePage } from "/src/components/CippComponents/CippTablePage.jsx";
 import { Layout as DashboardLayout } from "/src/layouts/index.js";
-import { Edit } from "@mui/icons-material";
+import {
+  Archive,
+  Block,
+  Clear,
+  CloudDone,
+  Edit,
+  Email,
+  ForwardToInbox,
+  GroupAdd,
+  LockOpen,
+  LockPerson,
+  LockReset,
+  MeetingRoom,
+  NoMeetingRoom,
+  Password,
+  PersonOff,
+  PhonelinkLock,
+  PhonelinkSetup,
+  Shortcut,
+} from "@mui/icons-material";
 import { Button } from "@mui/material";
 import Link from "next/link";
+import { useSettings } from "/src/hooks/use-settings.js";
 
 const Page = () => {
   const pageTitle = "Users";
+  const tenant = useSettings().currentTenant;
 
   const actions = [
     {
@@ -29,6 +50,7 @@ const Page = () => {
       //tested
       label: "Research Compromised Account",
       type: "GET",
+      icon: <MagnifyingGlassIcon />,
       link: "/identity/administration/users/user/bec?userId=[id]",
       confirmText: "Are you sure you want to research this compromised account?",
       multiPost: false,
@@ -38,6 +60,7 @@ const Page = () => {
 
       label: "Create Temporary Access Password",
       type: "GET",
+      icon: <Password />,
       url: "/api/ExecCreateTAP",
       data: { ID: "userPrincipalName" },
       confirmText: "Are you sure you want to create a Temporary Access Password?",
@@ -47,6 +70,7 @@ const Page = () => {
       //tested
       label: "Rerequire MFA registration",
       type: "GET",
+      icon: <PhonelinkSetup />,
       url: "/api/ExecResetMFA",
       data: { ID: "userPrincipalName" },
       confirmText: "Are you sure you want to reset MFA for this user?",
@@ -56,6 +80,7 @@ const Page = () => {
       //tested
       label: "Send MFA Push",
       type: "POST",
+      icon: <PhonelinkLock />,
       url: "/api/ExecSendPush",
       data: { UserEmail: "userPrincipalName" },
       confirmText: "Are you sure you want to send an MFA request?",
@@ -65,6 +90,7 @@ const Page = () => {
       //tested
       label: "Set Per-User MFA",
       type: "POST",
+      icon: <LockPerson />,
       url: "/api/ExecPerUserMFA",
       data: { userId: "userPrincipalName" },
       fields: [
@@ -87,6 +113,7 @@ const Page = () => {
       //tested
       label: "Convert to Shared Mailbox",
       type: "GET",
+      icon: <Email />,
       url: "/api/ExecConvertToSharedMailbox",
       data: { ID: "userPrincipalName" },
       confirmText: "Are you sure you want to convert this user to a shared mailbox?",
@@ -96,6 +123,7 @@ const Page = () => {
       //tested
       label: "Enable Online Archive",
       type: "GET",
+      icon: <Archive />,
       url: "/api/ExecEnableArchive",
       data: { ID: "userPrincipalName" },
       confirmText: "Are you sure you want to enable the online archive for this user?",
@@ -105,6 +133,7 @@ const Page = () => {
       //tested
       label: "Set Out of Office",
       type: "POST",
+      icon: <MeetingRoom />,
       url: "/api/ExecSetOoO",
       data: {
         userId: "userPrincipalName",
@@ -115,17 +144,29 @@ const Page = () => {
       confirmText: "Are you sure you want to set the out of office?",
       multiPost: false,
     },
+
+    {
+      label: "Disable Out of Office",
+      type: "POST",
+      icon: <NoMeetingRoom />,
+      url: "/api/ExecSetOoO",
+      data: { user: "userPrincipalName", AutoReplyState: "Disabled" },
+      confirmText: "Are you sure you want to disable the out of office?",
+      multiPost: false,
+    },
     {
       label: "Add to Group",
       type: "POST",
+      icon: <GroupAdd />,
       url: "/api/EditGroup",
-      data: { addMember: { value: "userPrincipalName" }, TenantId: "Tenant" },
+      data: { addMember: "userPrincipalName" },
       fields: [
         {
           type: "autoComplete",
           name: "groupId",
           label: "Select a group to add the user to",
           multiple: false,
+          creatable: false,
           api: {
             url: "/api/ListGroups",
             labelField: "displayName",
@@ -134,24 +175,17 @@ const Page = () => {
               groupType: "calculatedGroupType",
               groupName: "displayName",
             },
+            queryKey: `groups-${tenant}`,
           },
         },
       ],
       confirmText: "Are you sure you want to add the user to this group?",
-      multiPost: false,
-    },
-    {
-      label: "Disable Out of Office",
-      type: "POST",
-      url: "/api/ExecSetOoO",
-      data: { user: "userPrincipalName", AutoReplyState: "Disabled" },
-      confirmText: "Are you sure you want to disable the out of office?",
-      multiPost: false,
     },
     {
       label: "Disable Email Forwarding",
       type: "POST",
       url: "/api/ExecEmailForward",
+      icon: <ForwardToInbox />,
       data: {
         username: "userPrincipalName",
         userid: "userPrincipalName",
@@ -161,8 +195,46 @@ const Page = () => {
       multiPost: false,
     },
     {
+      label: "Pre-provision OneDrive",
+      type: "POST",
+      icon: <CloudDone />,
+      url: "/api/ExecOneDriveProvision",
+      data: { UserPrincipalName: "userPrincipalName" },
+      confirmText: "Are you sure you want to pre-provision OneDrive for this user?",
+      multiPost: false,
+    },
+    {
+      label: "Add OneDrive Shortcut",
+      type: "POST",
+      icon: <Shortcut />,
+      url: "/api/ExecOneDriveShortCut",
+      data: {
+        username: "userPrincipalName",
+        userid: "id",
+      },
+      fields: [
+        {
+          type: "autoComplete",
+          name: "siteUrl",
+          label: "Select a Site",
+          multiple: false,
+          creatable: false,
+          api: {
+            url: "/api/ListSites",
+            data: { type: "SharePointSiteUsage", URLOnly: true },
+            labelField: "webUrl",
+            valueField: "webUrl",
+            queryKey: `sharepointSites-${tenant}`,
+          },
+        },
+      ],
+      confirmText: "Select a SharePoint site to create a shortcut for:",
+      multiPost: false,
+    },
+    {
       label: "Block Sign In",
       type: "GET",
+      icon: <Block />,
       url: "/api/ExecDisableUser",
       data: { ID: "id" },
       confirmText: "Are you sure you want to block the sign-in for this user?",
@@ -171,6 +243,7 @@ const Page = () => {
     {
       label: "Unblock Sign In",
       type: "GET",
+      icon: <LockOpen />,
       url: "/api/ExecDisableUser",
       data: { ID: "id", Enable: true },
       confirmText: "Are you sure you want to unblock sign-in for this user?",
@@ -179,6 +252,7 @@ const Page = () => {
     {
       label: "Reset Password (Must Change)",
       type: "GET",
+      icon: <LockReset />,
       url: "/api/ExecResetPass",
       data: {
         MustChange: true,
@@ -192,6 +266,7 @@ const Page = () => {
     {
       label: "Reset Password",
       type: "GET",
+      icon: <LockReset />,
       url: "/api/ExecResetPass",
       data: {
         MustChange: false,
@@ -202,8 +277,20 @@ const Page = () => {
       multiPost: false,
     },
     {
+      label: "Clear Immutable ID",
+      type: "GET",
+      icon: <Clear />,
+      url: "/api/ExecClrImmId",
+      data: {
+        ID: "id",
+      },
+      confirmText: "Are you sure you want to clear the Immutable ID for this user?",
+      multiPost: false,
+    },
+    {
       label: "Revoke all user sessions",
       type: "GET",
+      icon: <PersonOff />,
       url: "/api/ExecRevokeSessions",
       data: { ID: "id", Username: "userPrincipalName" },
       confirmText: "Are you sure you want to revoke all sessions for this user?",
@@ -212,6 +299,7 @@ const Page = () => {
     {
       label: "Delete User",
       type: "GET",
+      icon: <TrashIcon />,
       url: "/api/RemoveUser",
       data: { ID: "id" },
       confirmText: "Are you sure you want to delete this user?",
@@ -292,11 +380,6 @@ const Page = () => {
           filterName: "Guest Accounts",
           value: [{ id: "userType", value: "Guest" }],
           type: "column",
-        },
-        {
-          //no type means its a text filter.
-          filterName: "User Account",
-          value: "Complex: isResourceAccount eq false",
         },
       ]}
     />

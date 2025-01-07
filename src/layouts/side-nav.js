@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import PropTypes from "prop-types";
-import { Box, Divider, Drawer, Stack } from "@mui/material";
+import { Box, Divider, Drawer, Stack, Typography } from "@mui/material";
 import { Scrollbar } from "../components/scrollbar";
 import { SideNavItem } from "./side-nav-item";
+import { useSettings } from "../hooks/use-settings";
 
 const SIDE_NAV_WIDTH = 270;
 const SIDE_NAV_COLLAPSED_WIDTH = 73; // icon size + padding + border right
@@ -108,7 +109,53 @@ export const SideNav = (props) => {
 
   // Preprocess items to mark which should be open
   const processedItems = markOpenItems(items, pathname);
+  //select a random sponsor image based on priority, priority 1 should be higher than priority 2 or higher
+  const currentSettings = useSettings();
+  const theme = currentSettings?.currentTheme?.value;
+  const sponsorimages = [
+    {
+      link: "https://rewst.io",
+      imagesrc: theme === "light" ? "/sponsors/rewst.png" : "/sponsors/rewst_dark.png",
+      priority: 1,
+    },
+    {
+      link: "https://rightofboom.com",
+      imagesrc: theme === "light" ? "/sponsors/RoB-light.svg" : "/sponsors/RoB.png",
+      priority: 1,
+    },
+    {
+      link: "https://ninjaone.com",
+      imagesrc: theme === "light" ? "/sponsors/ninjaone.png" : "/sponsors/ninjaone_white.png",
+      priority: 1,
+    },
+    {
+      link: "https://augmentt.com",
+      imagesrc: theme === "light" ? "/sponsors/augmentt-light.png" : "/sponsors/augmentt-dark.png",
+      priority: 1,
+    },
+    {
+      link: "https://huntress.com",
+      imagesrc: "/sponsors/huntress_teal.png",
+      priority: 1,
+    },
+  ];
 
+  const randomSponsorImage = () => {
+    let totalPriority = 0;
+    for (let i = 0; i < sponsorimages.length; i++) {
+      totalPriority += sponsorimages[i].priority;
+    }
+    let random = Math.floor(Math.random() * totalPriority);
+    let runningTotal = 0;
+    for (let i = 0; i < sponsorimages.length; i++) {
+      runningTotal += sponsorimages[i].priority;
+      if (random < runningTotal) {
+        return sponsorimages[i];
+      }
+    }
+  };
+
+  const randomimg = randomSponsorImage();
   return (
     <Drawer
       open
@@ -166,6 +213,27 @@ export const SideNav = (props) => {
             })}
           </Box>
           <Divider />
+          <Typography
+            color="text.secondary"
+            variant="caption"
+            sx={{ lineHeight: 4, textAlign: "center" }}
+          >
+            This application is sponsored by
+          </Typography>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+            }}
+          >
+            <img
+              src={randomimg.imagesrc}
+              alt="sponsor"
+              style={{ cursor: "pointer" }}
+              onClick={() => window.open(randomimg.link)}
+              width={"100px"}
+            />
+          </Box>
         </Box>
       </Scrollbar>
     </Drawer>

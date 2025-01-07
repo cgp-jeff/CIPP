@@ -1,5 +1,14 @@
 import PropTypes from "prop-types";
-import { Card, CardContent, CardHeader, Divider, Stack, SvgIcon, Typography } from "@mui/material";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  Divider,
+  formControlLabelClasses,
+  Stack,
+  SvgIcon,
+  Typography,
+} from "@mui/material";
 import { styled } from "@mui/material/styles";
 import {
   Timeline,
@@ -72,15 +81,15 @@ const CippStandardsSideBar = ({
   useEffect(() => {
     const stepsStatus = {
       step1: !!watchForm.templateName,
-      step2: Object.keys(selectedStandards).length > 0,
-      step3:
+      step2: watchForm.tenantFilter && watchForm.tenantFilter.length > 0,
+      step3: Object.keys(selectedStandards).length > 0,
+      step4:
         watchForm.standards &&
         Object.keys(selectedStandards).length > 0 &&
         Object.keys(selectedStandards).every((standardName) => {
           const standardValues = _.get(watchForm, `${standardName}`, {});
           return standardValues.action;
         }),
-      step4: watchForm.tenantFilter && watchForm.tenantFilter.length > 0,
     };
 
     const completedSteps = Object.values(stepsStatus).filter(Boolean).length;
@@ -89,15 +98,15 @@ const CippStandardsSideBar = ({
 
   const stepsStatus = {
     step1: !!watchForm.templateName,
-    step2: Object.keys(selectedStandards).length > 0,
-    step3:
+    step2: watchForm.tenantFilter && watchForm.tenantFilter.length > 0,
+    step3: Object.keys(selectedStandards).length > 0,
+    step4:
       watchForm.standards &&
       Object.keys(selectedStandards).length > 0 &&
       Object.keys(selectedStandards).every((standardName) => {
         const standardValues = _.get(watchForm, `${standardName}`, {});
         return standardValues.action;
       }),
-    step4: watchForm.tenantFilter && watchForm.tenantFilter.length > 0,
   };
   return (
     <Card>
@@ -118,6 +127,7 @@ const CippStandardsSideBar = ({
             allTenants={true}
             label="Included Tenants"
             formControl={formControl}
+            required={true}
           />
           {watchForm.tenantFilter?.some((tenant) => tenant.value === "AllTenants") && (
             <>
@@ -191,7 +201,7 @@ const CippStandardsSideBar = ({
             label={action.label}
             onClick={action.handler}
             disabled={
-              !stepsStatus[`step${index + 1}`] || currentStep < 3 || action.disabled || false
+              !(watchForm.tenantFilter && watchForm.tenantFilter.length > 0) || currentStep < 3
             }
           />
         ))}
